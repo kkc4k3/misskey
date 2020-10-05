@@ -1,11 +1,11 @@
 {
 	"name": "misskey",
-	"author": "syuilo <syuilotan@yahoo.co.jp>",
-	"version": "12.47.1",
+	"author": "kkcake <kkc4k3@gmail.com>",
+	"version": "12.47.1-kvche",
 	"codename": "indigo",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/syuilo/misskey.git"
+		"url": "https://github.com/kkc4k3/misskey.git"
 	},
 	"main": "./index.js",
 	"private": true,
