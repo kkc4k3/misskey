@@ -1,4 +1,5 @@
 @charset "utf-8";
+@import url("https://socialapi.app/api/opensticker/css/misskey/opensticker.css");
 
 :root {
 	--radius: 8px;
@@ -26,7 +27,8 @@ html {
 	color: var(--fg);
 	overflow: auto;
 
-	&, * {
+	&,
+	* {
 		scrollbar-color: var(--scrollbarHandle) var(--panel);
 		scrollbar-width: thin;
 
@@ -74,7 +76,9 @@ html {
 }
 
 html.changing-theme {
-	&, * {
+
+	&,
+	* {
 		transition: background 1s ease !important;
 	}
 }
@@ -92,7 +96,7 @@ body {
 	height: 100%;
 	cursor: wait;
 
-	> svg {
+	>svg {
 		position: absolute;
 		top: 0;
 		right: 0;
@@ -107,7 +111,8 @@ body {
 	}
 }
 
-html, body {
+html,
+body {
 	margin: 0;
 	padding: 0;
 	scroll-behavior: smooth;
@@ -187,7 +192,9 @@ hr {
 }
 
 ._ghost {
-	&, * {
+
+	&,
+	* {
 		@extend ._noSelect;
 		pointer-events: none;
 	}
@@ -218,7 +225,8 @@ hr {
 	touch-action: manipulation;
 	font-size: 1em;
 
-	&, * {
+	&,
+	* {
 		@extend ._noSelect;
 	}
 
@@ -271,7 +279,7 @@ hr {
 		margin-bottom: 8px;
 	}
 
-	> * {
+	>* {
 		flex: 1;
 		margin: 0 !important;
 
@@ -294,7 +302,7 @@ hr {
 	overflow: hidden;
 }
 
-._close_ ._list_ > * {
+._close_ ._list_>* {
 	box-shadow: 0 1px 0 0 var(--divider), 0 -1px 0 0 var(--divider);
 	border-radius: 0;
 	margin: 0 !important;
@@ -329,7 +337,7 @@ hr {
 ._card {
 	@extend ._panel;
 
-	> ._title {
+	>._title {
 		margin: 0;
 		padding: 22px 32px;
 		font-size: 1.1em;
@@ -344,7 +352,7 @@ hr {
 		}
 	}
 
-	> ._content {
+	>._content {
 		padding: 32px;
 
 		@media (max-width: 500px) {
@@ -355,12 +363,12 @@ hr {
 			padding: 0 !important;
 		}
 
-		& + ._content {
+		&+._content {
 			border-top: solid 1px var(--divider);
 		}
 	}
 
-	> ._footer {
+	>._footer {
 		border-top: solid 1px var(--divider);
 		padding: 24px 32px;
 
@@ -371,28 +379,28 @@ hr {
 }
 
 ._narrow_ ._card {
-	> ._title {
+	>._title {
 		padding: 16px;
 		font-size: 1em;
 	}
 
-	> ._content {
+	>._content {
 		padding: 16px;
 	}
 
-	> ._footer {
+	>._footer {
 		padding: 16px;
 	}
 }
 
 ._vMargin {
-	& + ._vMargin {
+	&+._vMargin {
 		margin-top: var(--margin);
 	}
 }
 
 ._table {
-	> ._row {
+	>._row {
 		display: flex;
 
 		&:not(:last-child) {
@@ -403,14 +411,14 @@ hr {
 			}
 		}
 
-		> ._cell {
+		>._cell {
 			flex: 1;
 
-			> ._label {
+			>._label {
 				font-size: 80%;
 				opacity: 0.7;
 
-				> ._icon {
+				>._icon {
 					margin-right: 4px;
 					display: none;
 				}
@@ -423,7 +431,7 @@ hr {
 	padding: 64px 32px;
 	text-align: center;
 
-	> img {
+	>img {
 		vertical-align: bottom;
 		height: 128px;
 		margin-bottom: 16px;
@@ -434,7 +442,7 @@ hr {
 ._keyValue {
 	display: flex;
 
-	> * {
+	>* {
 		flex: 1;
 	}
 }
@@ -461,10 +469,13 @@ hr {
 	outline: none;
 }
 
-.zoom-enter-active, .zoom-leave-active {
+.zoom-enter-active,
+.zoom-leave-active {
 	transition: opacity 0.5s, transform 0.5s !important;
 }
-.zoom-enter, .zoom-leave-to {
+
+.zoom-enter,
+.zoom-leave-to {
 	opacity: 0;
 	transform: scale(0.9);
 }
@@ -476,6 +487,7 @@ hr {
 	transition: transform 300ms cubic-bezier(0.23, 1, 0.32, 1), opacity 300ms cubic-bezier(0.23, 1, 0.32, 1);
 	transform-origin: center top;
 }
+
 .zoom-in-top-enter,
 .zoom-in-top-leave-active {
 	opacity: 0;
@@ -486,6 +498,7 @@ hr {
 	0% {
 		transform: rotate(0deg);
 	}
+
 	100% {
 		transform: rotate(360deg);
 	}
@@ -495,26 +508,57 @@ hr {
 	from {
 		transform: rotate(0deg);
 	}
+
 	to {
 		transform: rotate(360deg);
 	}
 }
 
 @keyframes spin {
-	0% { transform: rotate(0deg); }
-	100% { transform: rotate(360deg); }
+	0% {
+		transform: rotate(0deg);
+	}
+
+	100% {
+		transform: rotate(360deg);
+	}
 }
 
 @keyframes jump {
-	0% { transform: translateY(0); }
-	25% { transform: translateY(-16px); }
-	50% { transform: translateY(0); }
-	75% { transform: translateY(-8px); }
-	100% { transform: translateY(0); }
+	0% {
+		transform: translateY(0);
+	}
+
+	25% {
+		transform: translateY(-16px);
+	}
+
+	50% {
+		transform: translateY(0);
+	}
+
+	75% {
+		transform: translateY(-8px);
+	}
+
+	100% {
+		transform: translateY(0);
+	}
 }
 
 @keyframes blink {
-	0% { opacity: 1; transform: scale(1); }
-	30% { opacity: 1; transform: scale(1); }
-	90% { opacity: 0; transform: scale(0.5); }
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	30% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	90% {
+		opacity: 0;
+		transform: scale(0.5);
+	}
 }
