@@ -19,7 +19,8 @@ html
 		link(rel='prefetch' href='https://xn--931a.moe/assets/info.jpg')
 		link(rel='prefetch' href='https://xn--931a.moe/assets/not-found.jpg')
 		link(rel='prefetch' href='https://xn--931a.moe/assets/error.jpg')
-		link(rel="stylesheet" href="https://asia-northeast1-opensticker-css-for-misskey.cloudfunctions.net/create_css?domain=ms.kvche.ch" type="text/css")
+		link(rel="preload" href="https://asia-northeast1-opensticker-css-for-misskey.cloudfunctions.net/create_css?domain=ms.kvche.ch" as="style")
+		link(rel="stylesheet" href="https://asia-northeast1-opensticker-css-for-misskey.cloudfunctions.net/create_css?domain=ms.kvche.ch" media="print" onload="this.media='all'")
 
 		title
 			block title
