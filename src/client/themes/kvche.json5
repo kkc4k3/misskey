@@ -1,8 +1,9 @@
 {
 	id: "79c5a78c-0eba-4f81-8d30-7b249a9650d0",
 	name: "Kvche",
-	desc: "ms.kvche.ch default theme",
 	author: "kkcake",
+	desc: "ms.kvche.ch default theme",
+	base: "light",
 	props: {
 		accent: "$main",
 		bg: "$lighten",
@@ -28,6 +29,5 @@
 		$text: "#263238",
 		$main_light: "#B2DFDB",
 		$dark: "#37474F"
-	},
-	base: "light"
+	}
 }
