@@ -1,32 +1,35 @@
-import * as tinycolor from 'tinycolor2';
+import * as tinycolor from "tinycolor2";
 
 export type Theme = {
 	id: string;
 	name: string;
 	author: string;
 	desc?: string;
-	base?: 'dark' | 'light';
+	base?: "dark" | "light";
 	props: { [key: string]: string };
 };
 
-export const lightTheme: Theme = require('../themes/_light.json5');
-export const darkTheme: Theme = require('../themes/_dark.json5');
+export const lightTheme: Theme = require("../themes/_light.json5");
+export const darkTheme: Theme = require("../themes/_dark.json5");
 
-export const themeProps = Object.keys(lightTheme.props).filter(key => !key.startsWith('X'));
+export const themeProps = Object.keys(lightTheme.props).filter(
+	key => !key.startsWith("X")
+);
 
 export const builtinThemes = [
-	require('../themes/white.json5'),
-	require('../themes/black.json5'),
-	require('../themes/lilac.json5'),
-	require('../themes/halloween.json5'),
-	require('../themes/city.json5'),
-	require('../themes/rainy.json5'),
-	require('../themes/urban.json5'),
-	require('../themes/cafe.json5'),
-	require('../themes/chocolate.json5'),
-	require('../themes/danboard.json5'),
-	require('../themes/olive.json5'),
-	require('../themes/ocean.json5'),
+	require("../themes/kvche.json5"),
+	require("../themes/white.json5"),
+	require("../themes/black.json5"),
+	require("../themes/lilac.json5"),
+	require("../themes/halloween.json5"),
+	require("../themes/city.json5"),
+	require("../themes/rainy.json5"),
+	require("../themes/urban.json5"),
+	require("../themes/cafe.json5"),
+	require("../themes/chocolate.json5"),
+	require("../themes/danboard.json5"),
+	require("../themes/olive.json5"),
+	require("../themes/ocean.json5")
 ] as Theme[];
 
 let timeout = null;
@@ -34,10 +37,10 @@ let timeout = null;
 export function applyTheme(theme: Theme, persist = true) {
 	if (timeout) clearTimeout(timeout);
 
-	document.documentElement.classList.add('changing-theme');
+	document.documentElement.classList.add("changing-theme");
 
 	timeout = setTimeout(() => {
-		document.documentElement.classList.remove('changing-theme');
+		document.documentElement.classList.remove("changing-theme");
 	}, 1000);
 
 	// Deep copy
@@ -51,8 +54,8 @@ export function applyTheme(theme: Theme, persist = true) {
 	const props = compile(_theme);
 
 	for (const tag of document.head.children) {
-		if (tag.tagName === 'META' && tag.getAttribute('name') === 'theme-color') {
-			tag.setAttribute('content', props['html']);
+		if (tag.tagName === "META" && tag.getAttribute("name") === "theme-color") {
+			tag.setAttribute("content", props["html"]);
 			break;
 		}
 	}
@@ -62,33 +65,36 @@ export function applyTheme(theme: Theme, persist = true) {
 	}
 
 	if (persist) {
-		localStorage.setItem('theme', JSON.stringify(props));
+		localStorage.setItem("theme", JSON.stringify(props));
 	}
 }
 
 function compile(theme: Theme): Record<string, string> {
 	function getColor(val: string): tinycolor.Instance {
 		// ref (prop)
-		if (val[0] === '@') {
+		if (val[0] === "@") {
 			return getColor(theme.props[val.substr(1)]);
 		}
 
 		// ref (const)
-		else if (val[0] === '$') {
+		else if (val[0] === "$") {
 			return getColor(theme.props[val]);
 		}
 
 		// func
-		else if (val[0] === ':') {
-			const parts = val.split('<');
+		else if (val[0] === ":") {
+			const parts = val.split("<");
 			const func = parts.shift().substr(1);
 			const arg = parseFloat(parts.shift());
-			const color = getColor(parts.join('<'));
+			const color = getColor(parts.join("<"));
 
 			switch (func) {
-				case 'darken': return color.darken(arg);
-				case 'lighten': return color.lighten(arg);
-				case 'alpha': return color.setAlpha(arg);
+				case "darken":
+					return color.darken(arg);
+				case "lighten":
+					return color.lighten(arg);
+				case "alpha":
+					return color.setAlpha(arg);
 			}
 		}
 
@@ -99,7 +105,7 @@ function compile(theme: Theme): Record<string, string> {
 	const props = {};
 
 	for (const [k, v] of Object.entries(theme.props)) {
-		if (k.startsWith('$')) continue; // ignore const
+		if (k.startsWith("$")) continue; // ignore const
 
 		props[k] = genValue(getColor(v));
 	}
@@ -112,9 +118,10 @@ function genValue(c: tinycolor.Instance): string {
 }
 
 export function validateTheme(theme: Record<string, any>): boolean {
-	if (theme.id == null || typeof theme.id !== 'string') return false;
-	if (theme.name == null || typeof theme.name !== 'string') return false;
-	if (theme.base == null || !['light', 'dark'].includes(theme.base)) return false;
-	if (theme.props == null || typeof theme.props !== 'object') return false;
+	if (theme.id == null || typeof theme.id !== "string") return false;
+	if (theme.name == null || typeof theme.name !== "string") return false;
+	if (theme.base == null || !["light", "dark"].includes(theme.base))
+		return false;
+	if (theme.props == null || typeof theme.props !== "object") return false;
 	return true;
 }

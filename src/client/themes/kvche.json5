@@ -1,0 +1,33 @@
+{
+	id: "79c5a78c-0eba-4f81-8d30-7b249a9650d0",
+	name: "Kvche",
+	desc: "ms.kvche.ch default theme",
+	author: "kkcake",
+	props: {
+		accent: "$main",
+		bg: "$lighten",
+		fg: "$text",
+		divider: ":alpha<0<@bg",
+		panel: "#ffffff",
+		panelHeaderBg: "$main_light",
+		panelHeaderFg: "@fg",
+		header: "$main_light",
+		navBg: "$text",
+		navFg: "#ffffff",
+		navHoverFg: "$light",
+		navActive: "$sub",
+		link: "@accent",
+		hashtag: "@accent",
+		renote: "@accent",
+		inputBorder: "$light",
+		badge: "$sub",
+		$main: "#009688",
+		$sub: "#D81B60",
+		$lighten: "#ECEFF1",
+		$light: "#B0BEC5",
+		$text: "#263238",
+		$main_light: "#B2DFDB",
+		$dark: "#37474F"
+	},
+	base: "light"
+}
