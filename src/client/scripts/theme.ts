@@ -20,7 +20,7 @@ export const builtinThemes = [
 	require("../themes/kvche.json5"),
 	require("../themes/white.json5"),
 	require("../themes/black.json5"),
-	require("../themes/lilac.json5"),
+	// require("../themes/lilac.json5"),
 	require("../themes/halloween.json5"),
 	require("../themes/city.json5"),
 	require("../themes/rainy.json5"),
