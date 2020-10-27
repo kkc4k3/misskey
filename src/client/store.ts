@@ -1,33 +1,8 @@
-import Vuex from "vuex";
-import createPersistedState from "vuex-persistedstate";
-import * as nestedProperty from "nested-property";
-import {
-	faSatelliteDish,
-	faTerminal,
-	faHashtag,
-	faBroadcastTower,
-	faFireAlt,
-	faSearch,
-	faStar,
-	faAt,
-	faListUl,
-	faUserClock,
-	faUsers,
-	faCloud,
-	faGamepad,
-	faFileAlt,
-	faSatellite,
-	faDoorClosed,
-	faColumns
-} from "@fortawesome/free-solid-svg-icons";
-import {
-	faBell,
-	faEnvelope,
-	faComments
-} from "@fortawesome/free-regular-svg-icons";
-import { AiScript, utils, values } from "@syuilo/aiscript";
-import { apiUrl, deckmode } from "./config";
-import { erase } from "../prelude/array";
+import { createStore } from 'vuex';
+import createPersistedState from 'vuex-persistedstate';
+import * as nestedProperty from 'nested-property';
+import { api } from '@/os';
+import { erase } from '../prelude/array';
 
 export const defaultSettings = {
 	tutorial: 0,
@@ -86,21 +61,24 @@ export const defaultDeviceSettings = {
 	accounts: [],
 	recentEmojis: [],
 	themes: [],
-	darkTheme: "8c539dc1-0fab-4d47-9194-39c508e9bfe1",
-	lightTheme: "79c5a78c-0eba-4f81-8d30-7b249a9650d0",
+	darkTheme: '8050783a-7f63-445a-b270-36d0f6ba1677',
+	lightTheme: '4eea646f-7afa-4645-83e9-83af0333cd37',
 	darkMode: false,
 	deckMode: false,
 	syncDeviceDarkMode: true,
 	animation: true,
 	animatedMfm: true,
 	imageNewTab: false,
+	chatOpenBehavior: 'page',
+	defaultSideView: false,
+	deckNavWindow: true,
 	showFixedPostForm: false,
-	disablePagesScript: true,
+	disablePagesScript: false,
 	enableInfiniteScroll: true,
-	fixedWidgetsPosition: false,
 	useBlurEffectForModal: true,
-	sidebarDisplay: "full", // full, icon, hide
-	roomGraphicsQuality: "medium",
+	sidebarDisplay: 'full', // full, icon, hide
+	instanceTicker: 'remote', // none, remote, always
+	roomGraphicsQuality: 'medium',
 	roomUseOrthographicCamera: true,
 	deckColumnAlign: "left",
 	deckAlwaysShowMainColumn: true,
@@ -120,209 +98,36 @@ function copy<T>(data: T): T {
 	return JSON.parse(JSON.stringify(data));
 }
 
-export default () =>
-	new Vuex.Store({
-		plugins: [
-			createPersistedState({
-				paths: ["i", "device", "deviceUser", "settings", "instance"]
-			})
-		],
+export const postFormActions = [];
+export const userActions = [];
+export const noteActions = [];
+export const noteViewInterruptors = [];
+export const notePostInterruptors = [];
 
-		state: {
-			i: null,
-			pendingApiRequestsCount: 0,
-			spinner: null,
-			fullView: false,
+export const store = createStore({
+	strict: _DEV_,
 
-			// Plugin
-			pluginContexts: new Map<string, AiScript>(),
-			postFormActions: [],
-			userActions: [],
-			noteActions: [],
-			noteViewInterruptors: [],
-			notePostInterruptors: []
+	plugins: [createPersistedState({
+		paths: ['i', 'device', 'deviceUser', 'settings', 'instance']
+	})],
+
+	state: {
+		i: null,
+	},
+
+	getters: {
+		isSignedIn: state => state.i != null,
+	},
+
+	mutations: {
+		updateI(state, x) {
+			state.i = x;
 		},
 
-		getters: {
-			isSignedIn: state => state.i != null,
-
-			nav: (state, getters) => actions => ({
-				notifications: {
-					title: "notifications",
-					icon: faBell,
-					get show() {
-						return getters.isSignedIn;
-					},
-					get indicated() {
-						return getters.isSignedIn && state.i.hasUnreadNotification;
-					},
-					to: "/my/notifications"
-				},
-				messaging: {
-					title: "messaging",
-					icon: faComments,
-					get show() {
-						return getters.isSignedIn;
-					},
-					get indicated() {
-						return getters.isSignedIn && state.i.hasUnreadMessagingMessage;
-					},
-					to: "/my/messaging"
-				},
-				drive: {
-					title: "drive",
-					icon: faCloud,
-					get show() {
-						return getters.isSignedIn;
-					},
-					to: "/my/drive"
-				},
-				followRequests: {
-					title: "followRequests",
-					icon: faUserClock,
-					get show() {
-						return getters.isSignedIn && state.i.isLocked;
-					},
-					get indicated() {
-						return (
-							getters.isSignedIn && state.i.hasPendingReceivedFollowRequest
-						);
-					},
-					to: "/my/follow-requests"
-				},
-				featured: {
-					title: "featured",
-					icon: faFireAlt,
-					to: "/featured"
-				},
-				explore: {
-					title: "explore",
-					icon: faHashtag,
-					to: "/explore"
-				},
-				announcements: {
-					title: "announcements",
-					icon: faBroadcastTower,
-					get indicated() {
-						return getters.isSignedIn && state.i.hasUnreadAnnouncement;
-					},
-					to: "/announcements"
-				},
-				search: {
-					title: "search",
-					icon: faSearch,
-					action: () => actions.search()
-				},
-				lists: {
-					title: "lists",
-					icon: faListUl,
-					get show() {
-						return getters.isSignedIn;
-					},
-					to: "/my/lists"
-				},
-				groups: {
-					title: "groups",
-					icon: faUsers,
-					get show() {
-						return getters.isSignedIn;
-					},
-					to: "/my/groups"
-				},
-				antennas: {
-					title: "antennas",
-					icon: faSatellite,
-					get show() {
-						return getters.isSignedIn;
-					},
-					to: "/my/antennas"
-				},
-				mentions: {
-					title: "mentions",
-					icon: faAt,
-					get show() {
-						return getters.isSignedIn;
-					},
-					get indicated() {
-						return getters.isSignedIn && state.i.hasUnreadMentions;
-					},
-					to: "/my/mentions"
-				},
-				messages: {
-					title: "directNotes",
-					icon: faEnvelope,
-					get show() {
-						return getters.isSignedIn;
-					},
-					get indicated() {
-						return getters.isSignedIn && state.i.hasUnreadSpecifiedNotes;
-					},
-					to: "/my/messages"
-				},
-				favorites: {
-					title: "favorites",
-					icon: faStar,
-					get show() {
-						return getters.isSignedIn;
-					},
-					to: "/my/favorites"
-				},
-				pages: {
-					title: "pages",
-					icon: faFileAlt,
-					get show() {
-						return getters.isSignedIn;
-					},
-					to: "/my/pages"
-				},
-				channels: {
-					title: "channel",
-					icon: faSatelliteDish,
-					to: "/channels"
-				},
-				games: {
-					title: "games",
-					icon: faGamepad,
-					to: "/games"
-				},
-				scratchpad: {
-					title: "scratchpad",
-					icon: faTerminal,
-					to: "/scratchpad"
-				},
-				rooms: {
-					title: "rooms",
-					icon: faDoorClosed,
-					get show() {
-						return getters.isSignedIn;
-					},
-					get to() {
-						return `/@${state.i.username}/room`;
-					}
-				},
-				deck: {
-					title: deckmode ? "undeck" : "deck",
-					icon: faColumns,
-					action: () => {
-						localStorage.setItem("deckmode", (!deckmode).toString());
-						location.reload();
-					}
-				}
-			})
+		updateIKeyValue(state, { key, value }) {
+			state.i[key] = value;
 		},
-
-		mutations: {
-			updateI(state, x) {
-				state.i = x;
-			},
-
-			updateIKeyValue(state, { key, value }) {
-				state.i[key] = value;
-			},
-
-			setFullView(state, v) {
-				state.fullView = v;
-			},
+	},
 
 			initPlugin(state, { plugin, aiscript }) {
 				state.pluginContexts.set(plugin.id, aiscript);
@@ -384,18 +189,7 @@ export default () =>
 				});
 			}
 		},
-
-		actions: {
-			async login(ctx, i) {
-				ctx.commit("updateI", i);
-				ctx.commit("settings/init", i.clientData);
-				ctx.commit("deviceUser/init", ctx.state.device.userData[i.id] || {});
-				// TODO: ローカルストレージを消してページリロードしたときは i が無いのでその場合のハンドリングをよしなにやる
-				await ctx.dispatch("addAcount", {
-					id: i.id,
-					i: localStorage.getItem("i")
-				});
-			},
+	},
 
 			addAcount(ctx, info) {
 				if (!ctx.state.device.accounts.some(x => x.id === info.id)) {
@@ -429,11 +223,11 @@ export default () =>
 				await ctx.dispatch("login", i);
 			},
 
-			mergeMe(ctx, me) {
-				// TODO: プロパティ一つ一つに対してコミットが発生するのはアレなので良い感じにする
-				for (const [key, value] of Object.entries(me)) {
-					ctx.commit("updateIKeyValue", { key, value });
-				}
+			actions: {
+				async fetch(ctx) {
+					const meta = await api('meta', {
+						detail: false
+					});
 
 				if (me.clientData) {
 					ctx.commit("settings/init", me.clientData);
@@ -482,7 +276,19 @@ export default () =>
 						.catch(reject);
 				});
 
-				promise.then(onFinally, onFinally);
+			mutations: {
+				overwrite(state, x) {
+					for (const k of Object.keys(state)) {
+						if (x[k] === undefined) delete state[k];
+					}
+					for (const k of Object.keys(x)) {
+						state[k] = x[k];
+					}
+				},
+
+				set(state, x: { key: string; value: any }) {
+					state[x.key] = x.value;
+				},
 
 				return promise;
 			}
@@ -492,8 +298,39 @@ export default () =>
 			instance: {
 				namespaced: true,
 
-				state: {
-					meta: null
+			mutations: {
+				overwrite(state, x) {
+					for (const k of Object.keys(state)) {
+						if (x[k] === undefined) delete state[k];
+					}
+					for (const k of Object.keys(x)) {
+						state[k] = x[k];
+					}
+				},
+
+				init(state, x) {
+					for (const [key, value] of Object.entries(defaultDeviceUserSettings)) {
+						if (x[key]) {
+							state[key] = x[key];
+						} else {
+							state[key] = value;
+						}
+					}
+				},
+
+				set(state, x: { key: string; value: any }) {
+					state[x.key] = x.value;
+				},
+
+				setTl(state, x) {
+					state.tl = {
+						src: x.src,
+						arg: x.arg
+					};
+				},
+
+				setMenu(state, menu) {
+					state.menu = menu;
 				},
 
 				mutations: {
@@ -773,23 +610,15 @@ export default () =>
 					}
 				},
 
-				actions: {
-					set(ctx, x) {
-						ctx.commit("set", x);
+			actions: {
+				set(ctx, x) {
+					ctx.commit('set', x);
 
-						if (ctx.rootGetters.isSignedIn) {
-							ctx.dispatch(
-								"api",
-								{
-									endpoint: "i/update-client-setting",
-									data: {
-										name: x.key,
-										value: x.value
-									}
-								},
-								{ root: true }
-							);
-						}
+					if (ctx.rootGetters.isSignedIn) {
+						api('i/update-client-setting', {
+							name: x.key,
+							value: x.value
+						});
 					}
 				}
 			}
