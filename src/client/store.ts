@@ -9,38 +9,38 @@ export const defaultSettings = {
 	keepCw: false,
 	showFullAcct: false,
 	rememberNoteVisibility: false,
-	defaultNoteVisibility: "public",
+	defaultNoteVisibility: 'public',
 	defaultNoteLocalOnly: false,
 	uploadFolder: null,
-	pastedFileName: "yyyy-MM-dd HH-mm-ss [{{number}}]",
+	pastedFileName: 'yyyy-MM-dd HH-mm-ss [{{number}}]',
 	memo: null,
-	reactions: ["👍", "❤️", "😆", "🤔", "😮", "🎉", "💢", "😥", "😇", "🍮"],
-	mutedWords: []
+	reactions: ['👍', '❤️', '😆', '🤔', '😮', '🎉', '💢', '😥', '😇', '🍮'],
+	mutedWords: [],
 };
 
 export const defaultDeviceUserSettings = {
-	visibility: "public",
+	visibility: 'public',
 	localOnly: false,
 	widgets: [],
 	tl: {
-		src: "home"
+		src: 'home'
 	},
 	menu: [
-		"notifications",
-		"messaging",
-		"drive",
-		"-",
-		"followRequests",
-		"featured",
-		"explore",
-		"announcements",
-		"search",
-		"-",
-		"deck"
+		'notifications',
+		'messaging',
+		'drive',
+		'-',
+		'followRequests',
+		'featured',
+		'explore',
+		'announcements',
+		'search',
+		'-',
+		'deck',
 	],
 	deck: {
 		columns: [],
-		layout: []
+		layout: [],
 	},
 	plugins: [] as {
 		id: string;
@@ -49,7 +49,7 @@ export const defaultDeviceUserSettings = {
 		configData: Record<string, any>;
 		token: string;
 		ast: any[];
-	}[]
+	}[],
 };
 
 export const defaultDeviceSettings = {
@@ -57,7 +57,7 @@ export const defaultDeviceSettings = {
 	loadRawImages: false,
 	alwaysShowNsfw: false,
 	useOsNativeEmojis: false,
-	serverDisconnectedBehavior: "quiet",
+	serverDisconnectedBehavior: 'quiet',
 	accounts: [],
 	recentEmojis: [],
 	themes: [],
@@ -80,18 +80,18 @@ export const defaultDeviceSettings = {
 	instanceTicker: 'remote', // none, remote, always
 	roomGraphicsQuality: 'medium',
 	roomUseOrthographicCamera: true,
-	deckColumnAlign: "left",
+	deckColumnAlign: 'left',
 	deckAlwaysShowMainColumn: true,
-	deckMainColumnPlace: "left",
+	deckMainColumnPlace: 'left',
 	sfxVolume: 0.3,
-	sfxNote: "syuilo/down",
-	sfxNoteMy: "syuilo/up",
-	sfxNotification: "syuilo/pope2",
-	sfxChat: "syuilo/pope1",
-	sfxChatBg: "syuilo/waon",
-	sfxAntenna: "syuilo/triple",
-	sfxChannel: "syuilo/square-pico",
-	userData: {}
+	sfxNote: 'syuilo/down',
+	sfxNoteMy: 'syuilo/up',
+	sfxNotification: 'syuilo/pope2',
+	sfxChat: 'syuilo/pope1',
+	sfxChatBg: 'syuilo/waon',
+	sfxAntenna: 'syuilo/triple',
+	sfxChannel: 'syuilo/square-pico',
+	userData: {},
 };
 
 function copy<T>(data: T): T {
@@ -129,98 +129,63 @@ export const store = createStore({
 		},
 	},
 
-			initPlugin(state, { plugin, aiscript }) {
-				state.pluginContexts.set(plugin.id, aiscript);
-			},
+	actions: {
+		async login(ctx, i) {
+			ctx.commit('updateI', i);
+			ctx.commit('settings/init', i.clientData);
+			ctx.commit('deviceUser/init', ctx.state.device.userData[i.id] || {});
+			// TODO: ローカルストレージを消してページリロードしたときは i が無いのでその場合のハンドリングをよしなにやる
+			await ctx.dispatch('addAcount', { id: i.id, i: localStorage.getItem('i') });
+		},
 
-			registerPostFormAction(state, { pluginId, title, handler }) {
-				state.postFormActions.push({
-					title,
-					handler: (form, update) => {
-						state.pluginContexts.get(pluginId).execFn(handler, [
-							utils.jsToVal(form),
-							values.FN_NATIVE(([key, value]) => {
-								update(key.value, value.value);
-							})
-						]);
-					}
+		addAcount(ctx, info) {
+			if (!ctx.state.device.accounts.some(x => x.id === info.id)) {
+				ctx.commit('device/set', {
+					key: 'accounts',
+					value: ctx.state.device.accounts.concat([{ id: info.id, token: info.i }])
 				});
-			},
+			}
+		},
 
-			registerUserAction(state, { pluginId, title, handler }) {
-				state.userActions.push({
-					title,
-					handler: user => {
-						state.pluginContexts
-							.get(pluginId)
-							.execFn(handler, [utils.jsToVal(user)]);
-					}
-				});
-			},
+		logout(ctx) {
+			ctx.commit('device/setUserData', { userId: ctx.state.i.id, data: ctx.state.deviceUser });
+			ctx.commit('updateI', null);
+			ctx.commit('settings/init', {});
+			ctx.commit('deviceUser/init', {});
+			localStorage.removeItem('i');
+			document.cookie = `igi=; path=/`;
+		},
 
-			registerNoteAction(state, { pluginId, title, handler }) {
-				state.noteActions.push({
-					title,
-					handler: note => {
-						state.pluginContexts
-							.get(pluginId)
-							.execFn(handler, [utils.jsToVal(note)]);
-					}
-				});
-			},
+		async switchAccount(ctx, i) {
+			ctx.commit('device/setUserData', { userId: ctx.state.i.id, data: ctx.state.deviceUser });
+			localStorage.setItem('i', i.token);
+			await ctx.dispatch('login', i);
+		},
 
-			registerNoteViewInterruptor(state, { pluginId, handler }) {
-				state.noteViewInterruptors.push({
-					handler: note => {
-						return state.pluginContexts
-							.get(pluginId)
-							.execFn(handler, [utils.jsToVal(note)]);
-					}
-				});
-			},
+		mergeMe(ctx, me) {
+			// TODO: プロパティ一つ一つに対してコミットが発生するのはアレなので良い感じにする
+			for (const [key, value] of Object.entries(me)) {
+				ctx.commit('updateIKeyValue', { key, value });
+			}
 
-			registerNotePostInterruptor(state, { pluginId, handler }) {
-				state.notePostInterruptors.push({
-					handler: note => {
-						return state.pluginContexts
-							.get(pluginId)
-							.execFn(handler, [utils.jsToVal(note)]);
-					}
-				});
+			if (me.clientData) {
+				ctx.commit('settings/init', me.clientData);
 			}
 		},
 	},
 
-			addAcount(ctx, info) {
-				if (!ctx.state.device.accounts.some(x => x.id === info.id)) {
-					ctx.commit("device/set", {
-						key: "accounts",
-						value: ctx.state.device.accounts.concat([
-							{ id: info.id, token: info.i }
-						])
-					});
-				}
+	modules: {
+		instance: {
+			namespaced: true,
+
+			state: {
+				meta: null
 			},
 
-			logout(ctx) {
-				ctx.commit("device/setUserData", {
-					userId: ctx.state.i.id,
-					data: ctx.state.deviceUser
-				});
-				ctx.commit("updateI", null);
-				ctx.commit("settings/init", {});
-				ctx.commit("deviceUser/init", {});
-				localStorage.removeItem("i");
-				document.cookie = `igi=; path=/`;
-			},
-
-			async switchAccount(ctx, i) {
-				ctx.commit("device/setUserData", {
-					userId: ctx.state.i.id,
-					data: ctx.state.deviceUser
-				});
-				localStorage.setItem("i", i.token);
-				await ctx.dispatch("login", i);
+			mutations: {
+				set(state, meta) {
+					state.meta = meta;
+				},
 			},
 
 			actions: {
@@ -229,52 +194,15 @@ export const store = createStore({
 						detail: false
 					});
 
-				if (me.clientData) {
-					ctx.commit("settings/init", me.clientData);
+					ctx.commit('set', meta);
 				}
-			},
+			}
+		},
 
-			api(ctx, { endpoint, data, token }) {
-				if (++ctx.state.pendingApiRequestsCount === 1) {
-					// TODO: spinnerの表示はstoreでやらない
-					ctx.state.spinner = document.createElement("div");
-					ctx.state.spinner.setAttribute("id", "wait");
-					document.body.appendChild(ctx.state.spinner);
-				}
+		device: {
+			namespaced: true,
 
-				const onFinally = () => {
-					if (--ctx.state.pendingApiRequestsCount === 0)
-						ctx.state.spinner.parentNode.removeChild(ctx.state.spinner);
-				};
-
-				const promise = new Promise((resolve, reject) => {
-					// Append a credential
-					if (ctx.getters.isSignedIn) (data as any).i = ctx.state.i.token;
-					if (token !== undefined) (data as any).i = token;
-
-					// Send request
-					fetch(
-						endpoint.indexOf("://") > -1 ? endpoint : `${apiUrl}/${endpoint}`,
-						{
-							method: "POST",
-							body: JSON.stringify(data),
-							credentials: "omit",
-							cache: "no-cache"
-						}
-					)
-						.then(async res => {
-							const body = res.status === 204 ? null : await res.json();
-
-							if (res.status === 200) {
-								resolve(body);
-							} else if (res.status === 204) {
-								resolve();
-							} else {
-								reject(body.error);
-							}
-						})
-						.catch(reject);
-				});
+			state: defaultDeviceSettings,
 
 			mutations: {
 				overwrite(state, x) {
@@ -290,13 +218,16 @@ export const store = createStore({
 					state[x.key] = x.value;
 				},
 
-				return promise;
+				setUserData(state, x: { userId: string; data: any }) {
+					state.userData[x.userId] = copy(x.data);
+				},
 			}
 		},
 
-		modules: {
-			instance: {
-				namespaced: true,
+		deviceUser: {
+			namespaced: true,
+
+			state: defaultDeviceUserSettings,
 
 			mutations: {
 				overwrite(state, x) {
@@ -333,282 +264,209 @@ export const store = createStore({
 					state.menu = menu;
 				},
 
-				mutations: {
-					set(state, meta) {
-						state.meta = meta;
+				setVisibility(state, visibility) {
+					state.visibility = visibility;
+				},
+
+				setLocalOnly(state, localOnly) {
+					state.localOnly = localOnly;
+				},
+
+				setWidgets(state, widgets) {
+					state.widgets = widgets;
+				},
+
+				addWidget(state, widget) {
+					state.widgets.unshift(widget);
+				},
+
+				removeWidget(state, widget) {
+					state.widgets = state.widgets.filter(w => w.id != widget.id);
+				},
+
+				updateWidget(state, x) {
+					const w = state.widgets.find(w => w.id === x.id);
+					if (w) {
+						w.data = x.data;
 					}
 				},
 
-				actions: {
-					async fetch(ctx) {
-						const meta = await ctx.dispatch(
-							"api",
-							{
-								endpoint: "meta",
-								data: {
-									detail: false
-								}
-							},
-							{ root: true }
-						);
+				//#region Deck
+				addDeckColumn(state, column) {
+					if (column.name == undefined) column.name = null;
+					state.deck.columns.push(column);
+					state.deck.layout.push([column.id]);
+				},
 
-						ctx.commit("set", meta);
-					}
-				}
-			},
+				removeDeckColumn(state, id) {
+					state.deck.columns = state.deck.columns.filter(c => c.id != id);
+					state.deck.layout = state.deck.layout.map(ids => erase(id, ids));
+					state.deck.layout = state.deck.layout.filter(ids => ids.length > 0);
+				},
 
-			device: {
-				namespaced: true,
+				swapDeckColumn(state, x) {
+					const a = x.a;
+					const b = x.b;
+					const aX = state.deck.layout.findIndex(ids => ids.indexOf(a) != -1);
+					const aY = state.deck.layout[aX].findIndex(id => id == a);
+					const bX = state.deck.layout.findIndex(ids => ids.indexOf(b) != -1);
+					const bY = state.deck.layout[bX].findIndex(id => id == b);
+					state.deck.layout[aX][aY] = b;
+					state.deck.layout[bX][bY] = a;
+				},
 
-				state: defaultDeviceSettings,
-
-				mutations: {
-					set(state, x: { key: string; value: any }) {
-						state[x.key] = x.value;
-					},
-
-					setUserData(state, x: { userId: string; data: any }) {
-						state.userData[x.userId] = copy(x.data);
-					}
-				}
-			},
-
-			deviceUser: {
-				namespaced: true,
-
-				state: defaultDeviceUserSettings,
-
-				mutations: {
-					init(state, x) {
-						for (const [key, value] of Object.entries(
-							defaultDeviceUserSettings
-						)) {
-							if (x[key]) {
-								state[key] = x[key];
-							} else {
-								state[key] = value;
+				swapLeftDeckColumn(state, id) {
+					state.deck.layout.some((ids, i) => {
+						if (ids.indexOf(id) != -1) {
+							const left = state.deck.layout[i - 1];
+							if (left) {
+								// https://vuejs.org/v2/guide/list.html#Caveats
+								//state.deck.layout[i - 1] = state.deck.layout[i];
+								//state.deck.layout[i] = left;
+								state.deck.layout.splice(i - 1, 1, state.deck.layout[i]);
+								state.deck.layout.splice(i, 1, left);
 							}
+							return true;
 						}
-					},
+					});
+				},
 
-					set(state, x: { key: string; value: any }) {
-						state[x.key] = x.value;
-					},
-
-					setTl(state, x) {
-						state.tl = {
-							src: x.src,
-							arg: x.arg
-						};
-					},
-
-					setMenu(state, menu) {
-						state.menu = menu;
-					},
-
-					setVisibility(state, visibility) {
-						state.visibility = visibility;
-					},
-
-					setLocalOnly(state, localOnly) {
-						state.localOnly = localOnly;
-					},
-
-					setWidgets(state, widgets) {
-						state.widgets = widgets;
-					},
-
-					addWidget(state, widget) {
-						state.widgets.unshift(widget);
-					},
-
-					removeWidget(state, widget) {
-						state.widgets = state.widgets.filter(w => w.id != widget.id);
-					},
-
-					updateWidget(state, x) {
-						const w = state.widgets.find(w => w.id === x.id);
-						if (w) {
-							w.data = x.data;
+				swapRightDeckColumn(state, id) {
+					state.deck.layout.some((ids, i) => {
+						if (ids.indexOf(id) != -1) {
+							const right = state.deck.layout[i + 1];
+							if (right) {
+								// https://vuejs.org/v2/guide/list.html#Caveats
+								//state.deck.layout[i + 1] = state.deck.layout[i];
+								//state.deck.layout[i] = right;
+								state.deck.layout.splice(i + 1, 1, state.deck.layout[i]);
+								state.deck.layout.splice(i, 1, right);
+							}
+							return true;
 						}
-					},
+					});
+				},
 
-					//#region Deck
-					addDeckColumn(state, column) {
-						if (column.name == undefined) column.name = null;
-						state.deck.columns.push(column);
-						state.deck.layout.push([column.id]);
-					},
-
-					removeDeckColumn(state, id) {
-						state.deck.columns = state.deck.columns.filter(c => c.id != id);
-						state.deck.layout = state.deck.layout.map(ids => erase(id, ids));
-						state.deck.layout = state.deck.layout.filter(ids => ids.length > 0);
-					},
-
-					swapDeckColumn(state, x) {
-						const a = x.a;
-						const b = x.b;
-						const aX = state.deck.layout.findIndex(ids => ids.indexOf(a) != -1);
-						const aY = state.deck.layout[aX].findIndex(id => id == a);
-						const bX = state.deck.layout.findIndex(ids => ids.indexOf(b) != -1);
-						const bY = state.deck.layout[bX].findIndex(id => id == b);
-						state.deck.layout[aX][aY] = b;
-						state.deck.layout[bX][bY] = a;
-					},
-
-					swapLeftDeckColumn(state, id) {
-						state.deck.layout.some((ids, i) => {
-							if (ids.indexOf(id) != -1) {
-								const left = state.deck.layout[i - 1];
-								if (left) {
-									// https://vuejs.org/v2/guide/list.html#Caveats
-									//state.deck.layout[i - 1] = state.deck.layout[i];
-									//state.deck.layout[i] = left;
-									state.deck.layout.splice(i - 1, 1, state.deck.layout[i]);
-									state.deck.layout.splice(i, 1, left);
-								}
-								return true;
+				swapUpDeckColumn(state, id) {
+					const ids = state.deck.layout.find(ids => ids.indexOf(id) != -1);
+					ids.some((x, i) => {
+						if (x == id) {
+							const up = ids[i - 1];
+							if (up) {
+								// https://vuejs.org/v2/guide/list.html#Caveats
+								//ids[i - 1] = id;
+								//ids[i] = up;
+								ids.splice(i - 1, 1, id);
+								ids.splice(i, 1, up);
 							}
-						});
-					},
+							return true;
+						}
+					});
+				},
 
-					swapRightDeckColumn(state, id) {
-						state.deck.layout.some((ids, i) => {
-							if (ids.indexOf(id) != -1) {
-								const right = state.deck.layout[i + 1];
-								if (right) {
-									// https://vuejs.org/v2/guide/list.html#Caveats
-									//state.deck.layout[i + 1] = state.deck.layout[i];
-									//state.deck.layout[i] = right;
-									state.deck.layout.splice(i + 1, 1, state.deck.layout[i]);
-									state.deck.layout.splice(i, 1, right);
-								}
-								return true;
+				swapDownDeckColumn(state, id) {
+					const ids = state.deck.layout.find(ids => ids.indexOf(id) != -1);
+					ids.some((x, i) => {
+						if (x == id) {
+							const down = ids[i + 1];
+							if (down) {
+								// https://vuejs.org/v2/guide/list.html#Caveats
+								//ids[i + 1] = id;
+								//ids[i] = down;
+								ids.splice(i + 1, 1, id);
+								ids.splice(i, 1, down);
 							}
-						});
-					},
+							return true;
+						}
+					});
+				},
 
-					swapUpDeckColumn(state, id) {
-						const ids = state.deck.layout.find(ids => ids.indexOf(id) != -1);
-						ids.some((x, i) => {
-							if (x == id) {
-								const up = ids[i - 1];
-								if (up) {
-									// https://vuejs.org/v2/guide/list.html#Caveats
-									//ids[i - 1] = id;
-									//ids[i] = up;
-									ids.splice(i - 1, 1, id);
-									ids.splice(i, 1, up);
-								}
-								return true;
-							}
-						});
-					},
+				stackLeftDeckColumn(state, id) {
+					const i = state.deck.layout.findIndex(ids => ids.indexOf(id) != -1);
+					state.deck.layout = state.deck.layout.map(ids => erase(id, ids));
+					const left = state.deck.layout[i - 1];
+					if (left) state.deck.layout[i - 1].push(id);
+					state.deck.layout = state.deck.layout.filter(ids => ids.length > 0);
+				},
 
-					swapDownDeckColumn(state, id) {
-						const ids = state.deck.layout.find(ids => ids.indexOf(id) != -1);
-						ids.some((x, i) => {
-							if (x == id) {
-								const down = ids[i + 1];
-								if (down) {
-									// https://vuejs.org/v2/guide/list.html#Caveats
-									//ids[i + 1] = id;
-									//ids[i] = down;
-									ids.splice(i + 1, 1, id);
-									ids.splice(i, 1, down);
-								}
-								return true;
-							}
-						});
-					},
+				popRightDeckColumn(state, id) {
+					const i = state.deck.layout.findIndex(ids => ids.indexOf(id) != -1);
+					state.deck.layout = state.deck.layout.map(ids => erase(id, ids));
+					state.deck.layout.splice(i + 1, 0, [id]);
+					state.deck.layout = state.deck.layout.filter(ids => ids.length > 0);
+				},
 
-					stackLeftDeckColumn(state, id) {
-						const i = state.deck.layout.findIndex(ids => ids.indexOf(id) != -1);
-						state.deck.layout = state.deck.layout.map(ids => erase(id, ids));
-						const left = state.deck.layout[i - 1];
-						if (left) state.deck.layout[i - 1].push(id);
-						state.deck.layout = state.deck.layout.filter(ids => ids.length > 0);
-					},
+				addDeckWidget(state, x) {
+					const column = state.deck.columns.find(c => c.id == x.id);
+					if (column == null) return;
+					if (column.widgets == null) column.widgets = [];
+					column.widgets.unshift(x.widget);
+				},
 
-					popRightDeckColumn(state, id) {
-						const i = state.deck.layout.findIndex(ids => ids.indexOf(id) != -1);
-						state.deck.layout = state.deck.layout.map(ids => erase(id, ids));
-						state.deck.layout.splice(i + 1, 0, [id]);
-						state.deck.layout = state.deck.layout.filter(ids => ids.length > 0);
-					},
+				removeDeckWidget(state, x) {
+					const column = state.deck.columns.find(c => c.id == x.id);
+					if (column == null) return;
+					column.widgets = column.widgets.filter(w => w.id != x.widget.id);
+				},
 
-					addDeckWidget(state, x) {
-						const column = state.deck.columns.find(c => c.id == x.id);
-						if (column == null) return;
-						if (column.widgets == null) column.widgets = [];
-						column.widgets.unshift(x.widget);
-					},
+				renameDeckColumn(state, x) {
+					const column = state.deck.columns.find(c => c.id == x.id);
+					if (column == null) return;
+					column.name = x.name;
+				},
 
-					removeDeckWidget(state, x) {
-						const column = state.deck.columns.find(c => c.id == x.id);
-						if (column == null) return;
-						column.widgets = column.widgets.filter(w => w.id != x.widget.id);
-					},
+				updateDeckColumn(state, x) {
+					let column = state.deck.columns.find(c => c.id == x.id);
+					if (column == null) return;
+					column = x;
+				},
+				//#endregion
 
-					renameDeckColumn(state, x) {
-						const column = state.deck.columns.find(c => c.id == x.id);
-						if (column == null) return;
-						column.name = x.name;
-					},
+				installPlugin(state, { id, meta, ast, token }) {
+					state.plugins.push({
+						...meta,
+						id,
+						active: true,
+						configData: {},
+						token: token,
+						ast: ast
+					});
+				},
 
-					updateDeckColumn(state, x) {
-						let column = state.deck.columns.find(c => c.id == x.id);
-						if (column == null) return;
-						column = x;
-					},
-					//#endregion
+				uninstallPlugin(state, id) {
+					state.plugins = state.plugins.filter(x => x.id != id);
+				},
 
-					installPlugin(state, { id, meta, ast, token }) {
-						state.plugins.push({
-							...meta,
-							id,
-							active: true,
-							configData: {},
-							token: token,
-							ast: ast
-						});
-					},
+				configPlugin(state, { id, config }) {
+					state.plugins.find(p => p.id === id).configData = config;
+				},
 
-					uninstallPlugin(state, id) {
-						state.plugins = state.plugins.filter(x => x.id != id);
-					},
+				changePluginActive(state, { id, active }) {
+					state.plugins.find(p => p.id === id).active = active;
+				},
+			}
+		},
 
-					configPlugin(state, { id, config }) {
-						state.plugins.find(p => p.id === id).configData = config;
-					},
+		settings: {
+			namespaced: true,
 
-					changePluginActive(state, { id, active }) {
-						state.plugins.find(p => p.id === id).active = active;
-					}
-				}
-			},
+			state: defaultSettings,
 
-			settings: {
-				namespaced: true,
+			mutations: {
+				set(state, x: { key: string; value: any }) {
+					nestedProperty.set(state, x.key, x.value);
+				},
 
-				state: defaultSettings,
-
-				mutations: {
-					set(state, x: { key: string; value: any }) {
-						nestedProperty.set(state, x.key, x.value);
-					},
-
-					init(state, x) {
-						for (const [key, value] of Object.entries(defaultSettings)) {
-							if (x[key]) {
-								state[key] = x[key];
-							} else {
-								state[key] = value;
-							}
+				init(state, x) {
+					for (const [key, value] of Object.entries(defaultSettings)) {
+						if (x[key]) {
+							state[key] = x[key];
+						} else {
+							state[key] = value;
 						}
 					}
 				},
+			},
 
 			actions: {
 				set(ctx, x) {
@@ -620,7 +478,8 @@ export const store = createStore({
 							value: x.value
 						});
 					}
-				}
+				},
 			}
 		}
-	});
+	}
+});
