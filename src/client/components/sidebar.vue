@@ -11,14 +11,11 @@
 	<transition name="nav">
 		<nav class="nav" :class="{ iconOnly, hidden }" v-show="showing">
 			<div>
-				<button class="item _button account" @click="openAccountMenu" v-if="$store.getters.isSignedIn">
+				<button class="item _button account" @click="openAccountMenu">
 					<MkAvatar :user="$store.state.i" class="avatar"/><MkAcct class="text" :user="$store.state.i"/>
 				</button>
-				<button class="item _button index active" @click="top()" v-if="$route.name === 'index'">
-					<Fa :icon="faHome" fixed-width/><span class="text">{{ $store.getters.isSignedIn ? $t('timeline') : $t('home') }}</span>
-				</button>
-				<MkA class="item index" active-class="active" to="/" exact v-else>
-					<Fa :icon="faHome" fixed-width/><span class="text">{{ $store.getters.isSignedIn ? $t('timeline') : $t('home') }}</span>
+				<MkA class="item index" active-class="active" to="/" exact>
+					<Fa :icon="faHome" fixed-width/><span class="text">{{ $t('timeline') }}</span>
 				</MkA>
 				<template v-for="item in menu">
 					<div v-if="item === '-'" class="divider"></div>
@@ -28,7 +25,7 @@
 					</component>
 				</template>
 				<div class="divider"></div>
-				<button class="item _button" :class="{ active: $route.path === '/instance' || $route.path.startsWith('/instance/') }" v-if="$store.getters.isSignedIn && ($store.state.i.isAdmin || $store.state.i.isModerator)" @click="oepnInstanceMenu">
+				<button class="item _button" :class="{ active: $route.path === '/instance' || $route.path.startsWith('/instance/') }" v-if="$store.state.i.isAdmin || $store.state.i.isModerator" @click="oepnInstanceMenu">
 					<Fa :icon="faServer" fixed-width/><span class="text">{{ $t('instance') }}</span>
 				</button>
 				<button class="item _button" @click="more">
@@ -48,7 +45,7 @@
 import { defineComponent } from 'vue';
 import { faGripVertical, faChevronLeft, faHashtag, faBroadcastTower, faFireAlt, faEllipsisH, faPencilAlt, faBars, faTimes, faSearch, faUserCog, faCog, faUser, faHome, faStar, faCircle, faAt, faListUl, faPlus, faUserClock, faUsers, faTachometerAlt, faExchangeAlt, faGlobe, faChartBar, faCloud, faServer, faInfoCircle, faQuestionCircle, faProjectDiagram, faStream, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faBell, faEnvelope, faLaugh, faComments } from '@fortawesome/free-regular-svg-icons';
-import { host, instanceName } from '@/config';
+import { host } from '@/config';
 import { search } from '@/scripts/search';
 import * as os from '@/os';
 import { sidebarDef } from '@/sidebar';
@@ -74,7 +71,6 @@ export default defineComponent({
 		},
 
 		otherNavItemIndicated(): boolean {
-			if (!this.$store.getters.isSignedIn) return false;
 			for (const def in this.menuDef) {
 				if (this.menu.includes(def)) continue;
 				if (this.menuDef[def].indicated) return true;
@@ -118,10 +114,6 @@ export default defineComponent({
 
 		show() {
 			this.showing = true;
-		},
-
-		top() {
-			window.scroll({ top: 0, behavior: 'smooth' });
 		},
 
 		search() {
@@ -231,34 +223,12 @@ export default defineComponent({
 		},
 
 		more(ev) {
-			const items = Object.keys(this.menuDef).filter(k => !this.menu.includes(k)).map(k => this.menuDef[k]).filter(def => def.show == null ? true : def.show).map(def => ({
-				type: def.to ? 'link' : 'button',
-				text: this.$t(def.title),
-				icon: def.icon,
-				to: def.to,
-				action: def.action,
-				indicate: def.indicated,
-			}));
-			os.modalMenu([...items, null, {
-				type: 'link',
-				text: this.$t('help'),
-				to: '/docs',
-				icon: faQuestionCircle,
-			}, {
-				type: 'link',
-				text: this.$t('aboutX', { x: instanceName }),
-				to: '/about',
-				icon: faInfoCircle,
-			}, {
-				type: 'link',
-				text: this.$t('aboutMisskey'),
-				to: '/about-misskey',
-				icon: faInfoCircle,
-			}], ev.currentTarget || ev.target);
+			os.popup(import('./launch-pad.vue'), {}, {
+			}, 'closed');
 		},
 
-		async addAcount() {
-			os.popup(await import('./signin-dialog.vue'), {}, {
+		addAcount() {
+			os.popup(import('./signin-dialog.vue'), {}, {
 				done: res => {
 					this.$store.dispatch('addAcount', res);
 					os.success();
@@ -266,8 +236,8 @@ export default defineComponent({
 			}, 'closed');
 		},
 
-		async createAccount() {
-			os.popup(await import('./signup-dialog.vue'), {}, {
+		createAccount() {
+			os.popup(import('./signup-dialog.vue'), {}, {
 				done: res => {
 					this.$store.dispatch('addAcount', res);
 					this.switchAccountWithToken(res.i);
@@ -275,7 +245,7 @@ export default defineComponent({
 			}, 'closed');
 		},
 
-		async switchAccount(account: any) {
+		switchAccount(account: any) {
 			const token = this.$store.state.device.accounts.find((x: any) => x.id === account.id).token;
 			this.switchAccountWithToken(token);
 		},
@@ -422,9 +392,9 @@ export default defineComponent({
 			> .item {
 				position: relative;
 				display: block;
-				padding-left: 32px;
+				padding-left: 24px;
 				font-size: $ui-font-size;
-				line-height: 3.2rem;
+				line-height: 3rem;
 				text-overflow: ellipsis;
 				overflow: hidden;
 				white-space: nowrap;

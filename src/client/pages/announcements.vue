@@ -1,7 +1,7 @@
 <template>
 <div class="_section">
 	<MkPagination :pagination="pagination" #default="{items}" class="ruryvtyk _content" ref="list">
-		<section class="_card announcement" v-for="(announcement, i) in items" :key="announcement.id">
+		<section class="_card announcement _vMargin" v-for="(announcement, i) in items" :key="announcement.id">
 			<div class="_title"><span v-if="$store.getters.isSignedIn && !announcement.isRead">🆕 </span>{{ announcement.title }}</div>
 			<div class="_content">
 				<Mfm :text="announcement.text"/>
@@ -31,10 +31,8 @@ export default defineComponent({
 	data() {
 		return {
 			INFO: {
-				header: [{
-					title: this.$t('announcements'),
-					icon: faBroadcastTower
-				}]
+				title: this.$t('announcements'),
+				icon: faBroadcastTower
 			},
 			pagination: {
 				endpoint: 'announcements',

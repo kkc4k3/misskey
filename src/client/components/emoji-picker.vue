@@ -1,75 +1,105 @@
 <template>
 <MkModal ref="modal" :src="src" @click="$refs.modal.close()" @closed="$emit('closed')">
-	<div class="omfetrab _popup">
-		<header>
-			<button v-for="(category, i) in categories"
-				class="_button"
-				@click="go(category)"
-				:class="{ active: category.isActive }"
-				:key="i"
-			>
-				<Fa :icon="category.icon" fixed-width/>
-			</button>
-		</header>
-
+	<div class="omfetrab _popup" :class="['w' + width, 'h' + height, { big }]">
+		<input ref="search" class="search" :class="{ filled: q != null && q != '' }" v-model.trim="q" :placeholder="$t('search')" @paste.stop="paste" @keyup.enter="done()">
 		<div class="emojis">
-			<template v-if="categories[0].isActive">
-				<header class="category"><Fa :icon="faHistory" fixed-width/> {{ $t('recentUsed') }}</header>
-				<div class="list">
-					<button v-for="emoji in ($store.state.device.recentEmojis || [])"
+			<section class="result">
+				<div v-if="searchResultCustom.length > 0">
+					<button v-for="emoji in searchResultCustom"
 						class="_button"
 						:title="emoji.name"
-						@click="chosen(emoji)"
+						@click="chosen(emoji, $event)"
 						:key="emoji"
+						tabindex="0"
 					>
 						<MkEmoji v-if="emoji.char != null" :emoji="emoji.char"/>
 						<img v-else :src="$store.state.device.disableShowingAnimatedImages ? getStaticImageUrl(emoji.url) : emoji.url"/>
 					</button>
 				</div>
-
-				<header class="category"><Fa :icon="faAsterisk" fixed-width/> {{ $t('customEmojis') }}</header>
-			</template>
-
-			<template v-if="categories.find(x => x.isActive).name">
-				<div class="list">
-					<button v-for="emoji in emojilist.filter(e => e.category === categories.find(x => x.isActive).name)"
+				<div v-if="searchResultUnicode.length > 0">
+					<button v-for="emoji in searchResultUnicode"
 						class="_button"
 						:title="emoji.name"
-						@click="chosen(emoji)"
+						@click="chosen(emoji, $event)"
+						:key="emoji.name"
+						tabindex="0"
+					>
+						<MkEmoji :emoji="emoji.char"/>
+					</button>
+				</div>
+			</section>
+
+			<div class="index">
+				<section v-if="showPinned">
+					<div>
+						<button v-for="emoji in pinned"
+							class="_button"
+							@click="chosen(emoji, $event)"
+							tabindex="0"
+						>
+							<MkEmoji :emoji="emoji" :normal="true"/>
+						</button>
+					</div>
+				</section>
+
+				<section>
+					<header class="_acrylic"><Fa :icon="faClock" fixed-width/> {{ $t('recentUsed') }}</header>
+					<div>
+						<button v-for="emoji in $store.state.device.recentlyUsedEmojis"
+							class="_button"
+							@click="chosen(emoji, $event)"
+							:key="emoji"
+						>
+							<MkEmoji :emoji="emoji" :normal="true"/>
+						</button>
+					</div>
+				</section>
+
+				<div class="arrow"><Fa :icon="faChevronDown"/></div>
+			</div>
+
+			<section v-for="category in customEmojiCategories" :key="'custom:' + category" class="custom">
+				<header class="_acrylic" v-appear="() => visibleCategories[category] = true">{{ category || $t('other') }}</header>
+				<div v-if="visibleCategories[category]">
+					<button v-for="emoji in customEmojis.filter(e => e.category === category)"
+						class="_button"
+						:title="emoji.name"
+						@click="chosen(emoji, $event)"
+						:key="emoji.name"
+					>
+						<img :src="$store.state.device.disableShowingAnimatedImages ? getStaticImageUrl(emoji.url) : emoji.url"/>
+					</button>
+				</div>
+			</section>
+
+			<section v-for="category in categories" :key="category.name" class="unicode">
+				<header class="_acrylic" v-appear="() => category.isActive = true"><Fa :icon="category.icon" fixed-width/> {{ category.name }}</header>
+				<div v-if="category.isActive">
+					<button v-for="emoji in emojilist.filter(e => e.category === category.name)"
+						class="_button"
+						:title="emoji.name"
+						@click="chosen(emoji, $event)"
 						:key="emoji.name"
 					>
 						<MkEmoji :emoji="emoji.char"/>
 					</button>
 				</div>
-			</template>
-			<template v-else>
-				<div v-for="(key, i) in Object.keys(customEmojis)" :key="i">
-					<header class="sub" v-if="key">{{ key }}</header>
-					<div class="list">
-						<button v-for="emoji in customEmojis[key]"
-							class="_button"
-							:title="emoji.name"
-							@click="chosen(emoji)"
-							:key="emoji.name"
-						>
-							<img :src="$store.state.device.disableShowingAnimatedImages ? getStaticImageUrl(emoji.url) : emoji.url"/>
-						</button>
-					</div>
-				</div>
-			</template>
+			</section>
 		</div>
 	</div>
 </MkModal>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, markRaw } from 'vue';
 import { emojilist } from '../../misc/emojilist';
 import { getStaticImageUrl } from '@/scripts/get-static-image-url';
-import { faAsterisk, faLeaf, faUtensils, faFutbol, faCity, faDice, faGlobe, faHistory, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faAsterisk, faLeaf, faUtensils, faFutbol, faCity, faDice, faGlobe, faClock, faUser, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { faHeart, faFlag, faLaugh } from '@fortawesome/free-regular-svg-icons';
-import { groupByX } from '../../prelude/array';
 import MkModal from '@/components/ui/modal.vue';
+import Particle from '@/components/particle.vue';
+import * as os from '@/os';
+import { isDeviceTouch } from '../scripts/is-device-touch';
 
 export default defineComponent({
 	components: {
@@ -80,20 +110,33 @@ export default defineComponent({
 		src: {
 			required: false
 		},
+		showPinned: {
+			required: false,
+			default: true
+		},
+		asReactionPicker: {
+			required: false
+		},
 	},
 
 	emits: ['done', 'closed'],
 
 	data() {
 		return {
-			emojilist,
+			emojilist: markRaw(emojilist),
 			getStaticImageUrl,
-			customEmojis: {},
-			faGlobe, faHistory,
+			pinned: this.$store.state.settings.reactions,
+			width: this.asReactionPicker ? this.$store.state.device.reactionPickerWidth : 3,
+			height: this.asReactionPicker ? this.$store.state.device.reactionPickerHeight : 2,
+			big: this.asReactionPicker ? isDeviceTouch : false,
+			customEmojiCategories: this.$store.getters['instance/emojiCategories'],
+			customEmojis: this.$store.state.instance.meta.emojis,
+			visibleCategories: {},
+			q: null,
+			searchResultCustom: [],
+			searchResultUnicode: [],
+			faGlobe, faClock, faChevronDown,
 			categories: [{
-				icon: faAsterisk,
-				isActive: true
-			}, {
 				name: 'face',
 				icon: faLaugh,
 				isActive: false
@@ -134,38 +177,211 @@ export default defineComponent({
 		};
 	},
 
-	created() {
-		let local = this.$store.state.instance.meta.emojis;
-		local = groupByX(local, (x: any) => x.category || '');
-		this.customEmojis = local;
+	watch: {
+		q() {
+			if (this.q == null || this.q === '') {
+				this.searchResultCustom = [];
+				this.searchResultUnicode = [];
+				return;
+			}
+
+			const q = this.q.replace(/:/g, '');
+
+			const searchCustom = () => {
+				const max = 8;
+				const emojis = this.customEmojis;
+				const matches = new Set();
+
+				const exactMatch = emojis.find(e => e.name === q);
+				if (exactMatch) matches.add(exactMatch);
+
+				if (q.includes(' ')) { // AND検索
+					const keywords = q.split(' ');
+
+					// 名前にキーワードが含まれている
+					for (const emoji of emojis) {
+						if (keywords.every(keyword => emoji.name.includes(keyword))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					// 名前またはエイリアスにキーワードが含まれている
+					for (const emoji of emojis) {
+						if (keywords.every(keyword => emoji.name.includes(keyword) || emoji.aliases.some(alias => alias.includes(keyword)))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+				} else {
+					for (const emoji of emojis) {
+						if (emoji.name.startsWith(q)) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					for (const emoji of emojis) {
+						if (emoji.aliases.some(alias => alias.startsWith(q))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					for (const emoji of emojis) {
+						if (emoji.name.includes(q)) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					for (const emoji of emojis) {
+						if (emoji.aliases.some(alias => alias.includes(q))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+				}
+
+				return matches;
+			};
+
+			const searchUnicode = () => {
+				const max = 8;
+				const emojis = this.emojilist;
+				const matches = new Set();
+
+				const exactMatch = emojis.find(e => e.name === q);
+				if (exactMatch) matches.add(exactMatch);
+
+				if (q.includes(' ')) { // AND検索
+					const keywords = q.split(' ');
+
+					// 名前にキーワードが含まれている
+					for (const emoji of emojis) {
+						if (keywords.every(keyword => emoji.name.includes(keyword))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					// 名前またはエイリアスにキーワードが含まれている
+					for (const emoji of emojis) {
+						if (keywords.every(keyword => emoji.name.includes(keyword) || emoji.keywords.some(alias => alias.includes(keyword)))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+				} else {
+					for (const emoji of emojis) {
+						if (emoji.name.startsWith(q)) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					for (const emoji of emojis) {
+						if (emoji.keywords.some(keyword => keyword.startsWith(q))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					for (const emoji of emojis) {
+						if (emoji.name.includes(q)) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+					if (matches.size >= max) return matches;
+
+					for (const emoji of emojis) {
+						if (emoji.keywords.some(keyword => keyword.includes(q))) {
+							matches.add(emoji);
+							if (matches.size >= max) break;
+						}
+					}
+				}
+
+				return matches;
+			};
+
+			this.searchResultCustom = Array.from(searchCustom());
+			this.searchResultUnicode = Array.from(searchUnicode());
+		}
+	},
+
+	mounted() {
+		if (!os.isMobile) {
+			this.$refs.search.focus({
+				preventScroll: true
+			});
+		}
 	},
 
 	methods: {
-		go(category: any) {
-			this.goCategory(category.name);
+		getKey(emoji: any) {
+			return typeof emoji === 'string' ? emoji : (emoji.char || `:${emoji.name}:`);
 		},
 
-		goCategory(name: string) {
-			let matched = false;
-			for (const c of this.categories) {
-				c.isActive = c.name === name;
-				if (c.isActive) {
-					matched = true;
-				}
+		chosen(emoji: any, ev) {
+			if (ev) {
+				const el = ev.currentTarget || ev.target;
+				const rect = el.getBoundingClientRect();
+				const x = rect.left + (el.clientWidth / 2);
+				const y = rect.top + (el.clientHeight / 2);
+				os.popup(Particle, { x, y }, {}, 'end');
 			}
-			if (!matched) {
-				this.categories[0].isActive = true;
-			}
-		},
 
-		chosen(emoji: any) {
-			const getKey = (emoji: any) => emoji.char || `:${emoji.name}:`;
-			let recents = this.$store.state.device.recentEmojis || [];
-			recents = recents.filter((e: any) => getKey(e) !== getKey(emoji));
-			recents.unshift(emoji)
-			this.$store.commit('device/set', { key: 'recentEmojis', value: recents.splice(0, 16) });
-			this.$emit('done', getKey(emoji));
+			const key = this.getKey(emoji);
+			this.$emit('done', key);
 			this.$refs.modal.close();
+
+			// 最近使った絵文字更新
+			if (!this.pinned.includes(key)) {
+				let recents = this.$store.state.device.recentlyUsedEmojis;
+				recents = recents.filter((e: any) => e !== key);
+				recents.unshift(key);
+				this.$store.commit('device/set', { key: 'recentlyUsedEmojis', value: recents.splice(0, 16) });
+			}
+		},
+
+		paste(event) {
+			const paste = (event.clipboardData || window.clipboardData).getData('text');
+			if (this.done(paste)) {
+				event.preventDefault();
+			}
+		},
+
+		done(query) {
+			if (query == null) query = this.q;
+			if (query == null) return;
+			const q = query.replace(/:/g, '');
+			const exactMatchCustom = this.customEmojis.find(e => e.name === q);
+			if (exactMatchCustom) {
+				this.chosen(exactMatchCustom);
+				return true;
+			}
+			const exactMatchUnicode = this.emojilist.find(e => e.char === q || e.name === q);
+			if (exactMatchUnicode) {
+				this.chosen(exactMatchUnicode);
+				return true;
+			}
+			if (this.searchResultCustom.length > 0) {
+				this.chosen(this.searchResultCustom[0]);
+				return true;
+			}
+			if (this.searchResultUnicode.length > 0) {
+				this.chosen(this.searchResultUnicode[0]);
+				return true;
+			}
 		},
 	}
 });
@@ -173,86 +389,143 @@ export default defineComponent({
 
 <style lang="scss" scoped>
 .omfetrab {
-	width: 350px;
+	$pad: 8px;
+	--eachSize: 40px;
 
-	> header {
-		display: flex;
+	display: flex;
+	flex-direction: column;
+	contain: content;
 
-		> button {
-			flex: 1;
-			padding: 10px 0;
-			font-size: 16px;
-			transition: color 0.2s ease;
+	&.big {
+		--eachSize: 44px;
+	}
 
-			&:hover {
-				color: var(--fgHighlighted);
-				transition: color 0s;
-			}
+	&.w1 {
+		width: calc((var(--eachSize) * 5) + (#{$pad} * 2));
+	}
 
-			&.active {
-				color: var(--accent);
-				transition: color 0s;
-			}
+	&.w2 {
+		width: calc((var(--eachSize) * 6) + (#{$pad} * 2));
+	}
+
+	&.w3 {
+		width: calc((var(--eachSize) * 7) + (#{$pad} * 2));
+	}
+
+	&.h1 {
+		--height: calc((var(--eachSize) * 4) + (#{$pad} * 2));
+	}
+
+	&.h2 {
+		--height: calc((var(--eachSize) * 6) + (#{$pad} * 2));
+	}
+
+	&.h3 {
+		--height: calc((var(--eachSize) * 8) + (#{$pad} * 2));
+	}
+
+	> .search {
+		width: 100%;
+		padding: 12px;
+		box-sizing: border-box;
+		font-size: 1em;
+		outline: none;
+		border: none;
+		background: transparent;
+		color: var(--fg);
+
+		&:not(.filled) {
+			order: 1;
+			z-index: 2;
+			box-shadow: 0px -1px 0 0px var(--divider);
 		}
 	}
 
 	> .emojis {
-		height: 300px;
+		height: var(--height);
 		overflow-y: auto;
 		overflow-x: hidden;
 
-		> header.category {
-			position: sticky;
-			top: 0;
-			left: 0;
-			z-index: 1;
-			padding: 8px;
-			background: var(--panel);
-			font-size: 12px;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
 		}
 
-		header.sub {
-			padding: 4px 8px;
-			font-size: 12px;
-		}
-
-		div.list {
-			display: grid;
-			grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-			gap: 4px;
-			padding: 8px;
-
-			> button {
-				position: relative;
-				padding: 0;
+		> .index {
+			min-height: var(--height);
+			position: relative;
+			border-bottom: solid 1px var(--divider);
+				
+			> .arrow {
+				position: absolute;
+				bottom: 0;
+				left: 0;
 				width: 100%;
+				padding: 16px 0;
+				text-align: center;
+				opacity: 0.5;
+				pointer-events: none;
+			}
+		}
 
-				&:before {
-					content: '';
-					display: block;
-					width: 1px;
-					height: 0;
-					padding-bottom: 100%;
-				}
+		section {
+			> header {
+				position: sticky;
+				top: 0;
+				left: 0;
+				z-index: 1;
+				padding: 8px;
+				font-size: 12px;
+			}
 
-				&:hover {
+			> div {
+				padding: $pad;
+
+				> button {
+					position: relative;
+					padding: 0;
+					width: var(--eachSize);
+					height: var(--eachSize);
+					border-radius: 4px;
+
+					&:focus {
+						outline: solid 2px var(--focus);
+						z-index: 1;
+					}
+
+					&:hover {
+						background: rgba(0, 0, 0, 0.05);
+					}
+
+					&:active {
+						background: var(--accent);
+						box-shadow: inset 0 0.15em 0.3em rgba(27, 31, 35, 0.15);
+					}
+
 					> * {
-						transform: scale(1.2);
-						transition: transform 0s;
+						font-size: 24px;
+						height: 1.25em;
+						vertical-align: -.25em;
+						pointer-events: none;
 					}
 				}
+			}
 
-				> * {
-					position: absolute;
-					top: 0;
-					left: 0;
-					width: 100%;
-					height: 100%;
-					object-fit: contain;
-					font-size: 28px;
-					transition: transform 0.2s ease;
-					pointer-events: none;
+			&.result {
+				border-bottom: solid 1px var(--divider);
+
+				&:empty {
+					display: none;
 				}
+			}
+
+			&.unicode {
+				min-height: 384px;
+			}
+
+			&.custom {
+				min-height: 64px;
 			}
 		}
 	}

@@ -254,7 +254,7 @@ hr {
 	>._title {
 		margin: 0;
 		padding: 22px 32px;
-		font-size: 1.1em;
+		font-size: 1em;
 		border-bottom: solid 1px var(--panelHeaderDivider);
 		font-weight: bold;
 		background: var(--panelHeaderBg);
@@ -307,6 +307,21 @@ hr {
 	padding: 12px 0;
 }
 
+._borderButton {
+	@extend ._button;
+	display: block;
+	width: 100%;
+	padding: 10px;
+	box-sizing: border-box;
+	text-align: center;
+	border: solid 1px var(--divider);
+	border-radius: var(--radius);
+
+	&:active {
+		border-color: var(--accent);
+	}
+}
+
 ._popup {
 	background: var(--panel);
 	border-radius: var(--radius);
@@ -341,7 +356,6 @@ hr {
 
 	>._title {
 		margin-bottom: 24px;
-		font-size: 1.25em;
 		font-weight: bold;
 	}
 

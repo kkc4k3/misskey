@@ -36,7 +36,7 @@ export const defaultDeviceUserSettings = {
 		'announcements',
 		'search',
 		'-',
-		'deck',
+		'ui',
 	],
 	deck: {
 		columns: [],
@@ -59,7 +59,8 @@ export const defaultDeviceSettings = {
 	useOsNativeEmojis: false,
 	serverDisconnectedBehavior: 'quiet',
 	accounts: [],
-	recentEmojis: [],
+	recentlyUsedEmojis: [],
+	recentlyUsedUsers: [],
 	themes: [],
 	darkTheme: '8050783a-7f63-445a-b270-36d0f6ba1677',
 	lightTheme: '4eea646f-7afa-4645-83e9-83af0333cd37',
@@ -76,6 +77,9 @@ export const defaultDeviceSettings = {
 	disablePagesScript: false,
 	enableInfiniteScroll: true,
 	useBlurEffectForModal: true,
+	useFullReactionPicker: false,
+	reactionPickerWidth: 1,
+	reactionPickerHeight: 1,
 	sidebarDisplay: 'full', // full, icon, hide
 	instanceTicker: 'remote', // none, remote, always
 	roomGraphicsQuality: 'medium',
@@ -182,6 +186,16 @@ export const store = createStore({
 				meta: null
 			},
 
+			getters: {
+				emojiCategories: state => {
+					const categories = new Set();
+					for (const emoji of state.meta.emojis) {
+						categories.add(emoji.category);
+					}
+					return Array.from(categories);
+				},
+			},
+
 			mutations: {
 				set(state, meta) {
 					state.meta = meta;
@@ -241,7 +255,7 @@ export const store = createStore({
 
 				init(state, x) {
 					for (const [key, value] of Object.entries(defaultDeviceUserSettings)) {
-						if (x[key]) {
+						if (Object.prototype.hasOwnProperty.call(x, key)) {
 							state[key] = x[key];
 						} else {
 							state[key] = value;
@@ -459,7 +473,7 @@ export const store = createStore({
 
 				init(state, x) {
 					for (const [key, value] of Object.entries(defaultSettings)) {
-						if (x[key]) {
+						if (Object.prototype.hasOwnProperty.call(x, key)) {
 							state[key] = x[key];
 						} else {
 							state[key] = value;

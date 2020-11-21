@@ -41,7 +41,7 @@
 		<div class="main">
 			<XNoteHeader class="header" :note="appearNote" :mini="true"/>
 			<MkInstanceTicker v-if="showTicker" class="ticker" :instance="appearNote.user.instance"/>
-			<div class="body" ref="noteBody">
+			<div class="body">
 				<p v-if="appearNote.cw != null" class="cw">
 					<Mfm v-if="appearNote.cw != ''" class="text" :text="appearNote.cw" :author="appearNote.user" :i="$store.state.i" :custom-emojis="appearNote.emojis"/>
 					<XCwButton v-model:value="showContent" :note="appearNote"/>
@@ -54,7 +54,7 @@
 						<a class="rp" v-if="appearNote.renote != null">RN:</a>
 					</div>
 					<div class="files" v-if="appearNote.files.length > 0">
-						<XMediaList :media-list="appearNote.files" :parent-element="noteBody"/>
+						<XMediaList :media-list="appearNote.files"/>
 					</div>
 					<XPoll v-if="appearNote.poll" :note="appearNote" ref="pollViewer" class="poll"/>
 					<MkUrlPreview v-for="url in urls" :url="url" :key="url" :compact="true" :detail="detail" class="url-preview"/>
@@ -102,7 +102,7 @@
 
 <script lang="ts">
 import { computed, defineAsyncComponent, defineComponent, markRaw, ref } from 'vue';
-import { faSatelliteDish, faBolt, faTimes, faBullhorn, faStar, faLink, faExternalLinkSquareAlt, faPlus, faMinus, faRetweet, faReply, faReplyAll, faEllipsisH, faHome, faUnlock, faEnvelope, faThumbtack, faBan, faQuoteRight, faInfoCircle, faBiohazard, faPlug, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import { faSatelliteDish, faBolt, faTimes, faBullhorn, faStar, faLink, faExternalLinkSquareAlt, faPlus, faMinus, faRetweet, faReply, faReplyAll, faEllipsisH, faHome, faUnlock, faEnvelope, faThumbtack, faBan, faQuoteRight, faInfoCircle, faBiohazard, faPlug, faExclamationCircle, faPaperclip } from '@fortawesome/free-solid-svg-icons';
 import { faCopy, faTrashAlt, faEdit, faEye, faEyeSlash } from '@fortawesome/free-regular-svg-icons';
 import { parse } from '../../mfm/parse';
 import { sum, unique } from '../../prelude/array';
@@ -176,7 +176,6 @@ export default defineComponent({
 			showContent: false,
 			isDeleted: false,
 			muted: false,
-			noteBody: this.$refs.noteBody,
 			faEdit, faBolt, faTimes, faBullhorn, faPlus, faMinus, faRetweet, faReply, faReplyAll, faEllipsisH, faHome, faUnlock, faEnvelope, faThumbtack, faBan, faBiohazard, faPlug, faSatelliteDish
 		};
 	},
@@ -309,8 +308,6 @@ export default defineComponent({
 		if (this.$store.getters.isSignedIn) {
 			this.connection.on('_connected_', this.onStreamConnected);
 		}
-
-		this.noteBody = this.$refs.noteBody;
 	},
 
 	beforeUnmount() {
@@ -501,9 +498,9 @@ export default defineComponent({
 		react(viaKeyboard = false) {
 			pleaseLogin();
 			this.blur();
-			os.popup(defineAsyncComponent(() => import('@/components/reaction-picker.vue')), {
-				showFocus: viaKeyboard,
+			os.popup(import('@/components/emoji-picker.vue'), {
 				src: this.$refs.reactButton,
+				asReactionPicker: true
 			}, {
 				done: reaction => {
 					if (reaction) {
@@ -613,6 +610,11 @@ export default defineComponent({
 					text: this.$t('favorite'),
 					action: () => this.toggleFavorite(true)
 				}),
+				{
+					icon: faPaperclip,
+					text: this.$t('clip'),
+					action: () => this.clip()
+				},
 				(this.appearNote.userId != this.$store.state.i.id) ? statePromise.then(state => state.isWatching ? {
 					icon: faEyeSlash,
 					text: this.$t('unwatch'),
@@ -647,7 +649,7 @@ export default defineComponent({
 						text: this.$t('reportAbuse'),
 						action: () => {
 							const u = `${url}/notes/${this.appearNote.id}`;
-							os.popup(defineAsyncComponent(() => import('@/components/abuse-report-window.vue')), {
+							os.popup(import('@/components/abuse-report-window.vue'), {
 								user: this.appearNote.user,
 								initialComment: `Note: ${u}\n-----\n`
 							}, {}, 'closed');
@@ -763,6 +765,44 @@ export default defineComponent({
 					});
 				}
 			});
+		},
+
+		async clip() {
+			const clips = await os.api('clips/list');
+			os.modalMenu([{
+				icon: faPlus,
+				text: this.$t('createNew'),
+				action: async () => {
+					const { canceled, result } = await os.form(this.$t('createNewClip'), {
+						name: {
+							type: 'string',
+							label: this.$t('name')
+						},
+						description: {
+							type: 'string',
+							required: false,
+							multiline: true,
+							label: this.$t('description')
+						},
+						isPublic: {
+							type: 'boolean',
+							label: this.$t('public'),
+							default: false
+						}
+					});
+					if (canceled) return;
+
+					const clip = await os.apiWithDialog('clips/create', result);
+
+					os.apiWithDialog('clips/add-note', { clipId: clip.id, noteId: this.appearNote.id });
+				}
+			}, null, ...clips.map(clip => ({
+				text: clip.name,
+				action: () => {
+					os.apiWithDialog('clips/add-note', { clipId: clip.id, noteId: this.appearNote.id });
+				}
+			}))], this.$refs.menuButton, {
+			}).then(this.focus);
 		},
 
 		async promote() {

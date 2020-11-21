@@ -4,15 +4,6 @@
 		<MkButton full primary @click="configure"><Fa :icon="faCog"/> {{ $t('notificationSetting') }}</MkButton>
 	</div>
 	<div class="_section">
-		<div class="_card">
-			<div class="_content">
-				<MkSwitch v-model:value="$store.state.i.autoWatch" @update:value="onChangeAutoWatch">
-					{{ $t('autoNoteWatch') }}<template #desc>{{ $t('autoNoteWatchDescription') }}</template>
-				</MkSwitch>
-			</div>
-		</div>
-	</div>
-	<div class="_section">
 		<MkButton full @click="readAllNotifications">{{ $t('markAsReadAllNotifications') }}</MkButton>
 		<MkButton full @click="readAllUnreadNotes">{{ $t('markAsReadAllUnreadNotes') }}</MkButton>
 		<MkButton full @click="readAllMessagingMessages">{{ $t('markAsReadAllTalkMessages') }}</MkButton>
@@ -40,10 +31,8 @@ export default defineComponent({
 	data() {
 		return {
 			INFO: {
-				header: [{
-					title: this.$t('notifications'),
-					icon: faBell
-				}]
+				title: this.$t('notifications'),
+				icon: faBell
 			},
 			faCog
 		}
@@ -54,12 +43,6 @@ export default defineComponent({
 	},
 
 	methods: {
-		onChangeAutoWatch(v) {
-			os.api('i/update', {
-				autoWatch: v
-			});
-		},
-
 		readAllUnreadNotes() {
 			os.api('i/read-all-unread-notes');
 		},
@@ -72,9 +55,9 @@ export default defineComponent({
 			os.api('notifications/mark-all-as-read');
 		},
 
-		async configure() {
+		configure() {
 			const includingTypes = notificationTypes.filter(x => !this.$store.state.i.mutingNotificationTypes.includes(x));
-			os.popup(await import('@/components/notification-setting-window.vue'), {
+			os.popup(import('@/components/notification-setting-window.vue'), {
 				includingTypes,
 				showGlobalToggle: false,
 			}, {

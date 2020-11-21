@@ -20,7 +20,7 @@
 		</div>
 	</div>
 
-	<XPostForm :channel="channel" class="post-form _content _panel _vMargin" fixed/>
+	<XPostForm :channel="channel" class="post-form _content _panel _vMargin" fixed v-if="this.$store.getters.isSignedIn"/>
 
 	<XTimeline class="_content _vMargin" src="channel" :channel="channelId" @before="before" @after="after"/>
 </div>
@@ -54,10 +54,8 @@ export default defineComponent({
 	data() {
 		return {
 			INFO: computed(() => this.channel ? {
-				header: [{
-					title: this.channel.name,
-					icon: faSatelliteDish,
-				}],
+				title: this.channel.name,
+				icon: faSatelliteDish,
 			} : null),
 			channel: null,
 			showBanner: true,

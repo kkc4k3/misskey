@@ -52,7 +52,7 @@
 				</MkInput>
 			</div>
 
-			<MkPagination :pagination="pagination" #default="{items}" class="users" ref="users" :auto-margin="false">
+			<MkPagination :pagination="pagination" #default="{items}" class="users" ref="users">
 				<button class="user _panel _button _vMargin" v-for="user in items" :key="user.id" @click="show(user)">
 					<MkAvatar class="avatar" :user="user" :disable-link="true"/>
 					<div class="body">
@@ -101,10 +101,8 @@ export default defineComponent({
 	data() {
 		return {
 			INFO: {
-				header: [{
-					title: this.$t('users'),
-					icon: faUsers
-				}],
+				title: this.$t('users'),
+				icon: faUsers,
 				action: {
 					icon: faSearch,
 					handler: this.searchUser
@@ -206,8 +204,8 @@ export default defineComponent({
 			});
 		},
 
-		async show(user) {
-			os.popup(await import('./user-dialog.vue'), {
+		show(user) {
+			os.popup(import('./user-dialog.vue'), {
 				userId: user.id
 			}, {}, 'closed');
 		},
