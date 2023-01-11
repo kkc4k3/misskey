@@ -404,6 +404,10 @@ const wallpaper = localStorage.getItem("wallpaper") != null;
 				background: var(--X2);
 			}
 
+			&.post:hover {
+				background: var(--accentLighten);
+			}
+
 			> .indicator {
 				position: absolute;
 				top: 0;
