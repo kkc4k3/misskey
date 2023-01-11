@@ -37,28 +37,19 @@ const bg = {
 <style lang="scss" scoped>
 .hpaizdrt {
 	$height: 1.4rem;
-
 	height: $height;
 	border-radius: 4px 0 0 4px;
 	overflow: hidden;
 	color: #fff;
-	// text-shadow: /* .866 ≈ sin(60deg) */
-	// 	1px 0 1px #000,
-	// 	.866px .5px 1px #000,
-	// 	.5px .866px 1px #000,
-	// 	0 1px 1px #000,
-	// 	-.5px .866px 1px #000,
-	// 	-.866px .5px 1px #000,
-	// 	-1px 0 1px #000,
-	// 	-.866px -.5px 1px #000,
-	// 	-.5px -.866px 1px #000,
-	// 	0 -1px 1px #000,
-	// 	.5px -.866px 1px #000,
-	// 	.866px -.5px 1px #000;
+	display: flex;
+	align-items: center;
 
 	> .icon {
-		height: 100%;
-		padding-left: 0.2rem;
+		height: 1.1rem;
+		width: 1.1rem;
+		border-radius: 0.2rem;
+		margin-left: 0.2rem;
+		object-fit: contain;
 	}
 
 	> .name {
@@ -66,7 +57,7 @@ const bg = {
 		line-height: $height;
 		font-size: 0.9em;
 		vertical-align: top;
-		font-weight: bold;
+		font-weight: 600;
 	}
 }
 </style>
