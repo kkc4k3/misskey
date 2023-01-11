@@ -17,7 +17,7 @@
 ::selection {
 	color: #fff;
 	background-color: var(--accent);
-} 
+}
 
 html {
 	touch-action: manipulation;
@@ -29,13 +29,14 @@ html {
 	accent-color: var(--accent);
 	overflow: auto;
 	overflow-wrap: break-word;
-	font-family: "BIZ UDGothic", Roboto, HelveticaNeue, Arial, sans-serif;
+	font-family: "Koruri", "BIZ UDGothic", Roboto, HelveticaNeue, Arial, sans-serif;
 	font-size: 14px;
 	line-height: 1.35;
 	text-size-adjust: 100%;
 	tab-size: 2;
 
-	&, * {
+	&,
+	* {
 		scrollbar-color: var(--scrollbarHandle) inherit;
 		scrollbar-width: thin;
 
@@ -79,12 +80,15 @@ html {
 }
 
 html._themeChanging_ {
-	&, * {
+
+	&,
+	* {
 		transition: background 1s ease, border 1s ease !important;
 	}
 }
 
-html, body {
+html,
+body {
 	margin: 0;
 	padding: 0;
 	scroll-behavior: smooth;
@@ -102,12 +106,14 @@ a {
 	}
 }
 
-textarea, input {
+textarea,
+input {
 	tap-highlight-color: transparent;
 	-webkit-tap-highlight-color: transparent;
 }
 
-optgroup, option {
+optgroup,
+option {
 	background: var(--panel);
 	color: var(--fg);
 }
@@ -126,7 +132,9 @@ hr {
 }
 
 ._ghost {
-	&, * {
+
+	&,
+	* {
 		@extend ._noSelect;
 		pointer-events: none;
 	}
@@ -163,7 +171,8 @@ hr {
 	font-family: inherit;
 	line-height: inherit;
 
-	&, * {
+	&,
+	* {
 		@extend ._noSelect;
 	}
 
@@ -235,7 +244,7 @@ hr {
 		margin-bottom: 8px;
 	}
 
-	> * {
+	>* {
 		flex: 1;
 		margin: 0 !important;
 
@@ -258,7 +267,7 @@ hr {
 ._block {
 	@extend ._panel;
 
-	& + ._block {
+	&+._block {
 		margin-top: var(--margin);
 	}
 }
@@ -272,7 +281,7 @@ hr {
 	@extend ._panel;
 
 	// TODO: _cardTitle に
-	> ._title {
+	>._title {
 		margin: 0;
 		padding: 22px 32px;
 		font-size: 1em;
@@ -288,7 +297,7 @@ hr {
 	}
 
 	// TODO: _cardContent に
-	> ._content {
+	>._content {
 		padding: 32px;
 
 		@media (max-width: 500px) {
@@ -299,13 +308,13 @@ hr {
 			padding: 0 !important;
 		}
 
-		& + ._content {
+		&+._content {
 			border-top: solid 0.5px var(--divider);
 		}
 	}
 
 	// TODO: _cardFooter に
-	> ._footer {
+	>._footer {
 		border-top: solid 0.5px var(--divider);
 		padding: 24px 32px;
 
@@ -341,28 +350,28 @@ hr {
 	._section:not(:empty) {
 		box-sizing: border-box;
 		padding: var(--root-margin, 32px);
-	
+
 		@media (max-width: 500px) {
 			--root-margin: 10px;
 		}
-	
-		& + ._section:not(:empty) {
+
+		&+._section:not(:empty) {
 			border-top: solid 0.5px var(--divider);
 		}
 	}
 }
 
 ._narrow_ ._card {
-	> ._title {
+	>._title {
 		padding: 16px;
 		font-size: 1em;
 	}
 
-	> ._content {
+	>._content {
 		padding: 16px;
 	}
 
-	> ._footer {
+	>._footer {
 		padding: 16px;
 	}
 }
@@ -378,11 +387,11 @@ hr {
 }
 
 ._formRoot {
-	> ._formBlock:first-child {
+	>._formBlock:first-child {
 		margin-top: 0;
 	}
 
-	> ._formBlock:last-child {
+	>._formBlock:last-child {
 		margin-bottom: 0;
 	}
 }
@@ -394,7 +403,7 @@ hr {
 }
 
 ._formLinks {
-	> *:not(:last-child) {
+	>*:not(:last-child) {
 		margin-bottom: 8px;
 	}
 }
@@ -410,7 +419,7 @@ hr {
 }
 
 ._table {
-	> ._row {
+	>._row {
 		display: flex;
 
 		&:not(:last-child) {
@@ -421,14 +430,14 @@ hr {
 			}
 		}
 
-		> ._cell {
+		>._cell {
 			flex: 1;
 
-			> ._label {
+			>._label {
 				font-size: 80%;
 				opacity: 0.7;
 
-				> ._icon {
+				>._icon {
 					margin-right: 4px;
 					display: none;
 				}
@@ -441,7 +450,7 @@ hr {
 	padding: 64px 32px;
 	text-align: center;
 
-	> img {
+	>img {
 		vertical-align: bottom;
 		height: 128px;
 		margin-bottom: 16px;
@@ -452,7 +461,7 @@ hr {
 ._keyValue {
 	display: flex;
 
-	> * {
+	>* {
 		flex: 1;
 	}
 }
@@ -486,21 +495,35 @@ hr {
 ._zoom {
 	transition-duration: 0.5s, 0.5s;
 	transition-property: opacity, transform;
-	transition-timing-function: cubic-bezier(0,.5,.5,1);
+	transition-timing-function: cubic-bezier(0, .5, .5, 1);
 }
 
-.zoom-enter-active, .zoom-leave-active {
+.zoom-enter-active,
+.zoom-leave-active {
 	transition: opacity 0.5s, transform 0.5s !important;
 }
-.zoom-enter-from, .zoom-leave-to {
+
+.zoom-enter-from,
+.zoom-leave-to {
 	opacity: 0;
 	transform: scale(0.9);
 }
 
 @keyframes blink {
-	0% { opacity: 1; transform: scale(1); }
-	30% { opacity: 1; transform: scale(1); }
-	90% { opacity: 0; transform: scale(0.5); }
+	0% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	30% {
+		opacity: 1;
+		transform: scale(1);
+	}
+
+	90% {
+		opacity: 0;
+		transform: scale(0.5);
+	}
 }
 
 @keyframes tada {
@@ -533,29 +556,34 @@ hr {
 
 ._anime_bounce {
 	will-change: transform;
-  animation: bounce ease 0.7s;
-  animation-iteration-count: 1;
-  transform-origin: 50% 50%;
+	animation: bounce ease 0.7s;
+	animation-iteration-count: 1;
+	transform-origin: 50% 50%;
 }
+
 ._anime_bounce_ready {
 	will-change: transform;
-	transform:  scaleX(0.90) scaleY(0.90) ;
+	transform: scaleX(0.90) scaleY(0.90);
 }
+
 ._anime_bounce_standBy {
 	transition: transform 0.1s ease;
 }
 
-@keyframes bounce{
-  0% {
-    transform:  scaleX(0.90) scaleY(0.90) ;
-  }
-  19% {
-    transform:  scaleX(1.10) scaleY(1.10) ;
-  }
-  48% {
-    transform:  scaleX(0.95) scaleY(0.95) ;
-  }
-  100% {
-    transform:  scaleX(1.00) scaleY(1.00) ;
-  }
+@keyframes bounce {
+	0% {
+		transform: scaleX(0.90) scaleY(0.90);
+	}
+
+	19% {
+		transform: scaleX(1.10) scaleY(1.10);
+	}
+
+	48% {
+		transform: scaleX(0.95) scaleY(0.95);
+	}
+
+	100% {
+		transform: scaleX(1.00) scaleY(1.00);
+	}
 }
